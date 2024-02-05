@@ -200,13 +200,22 @@ public class PostgresIndexDAO extends PostgresBaseDAO implements IndexDAO {
 
     @Override
     public void removeWorkflow(String workflowId) {
-        logger.info("removeWorkflow is not supported for postgres indexing");
+        REMOVE_WORKFLOW_SQL =
+                "WITH workflow_delete AS (DELETE FROM workflow_index WHERE workflow_id = ?),"
+                        + "task_delete AS (DELETE FROM task_index WHERE workflow_id = ? RETURNING task_id)"
+                        + "DELETE FROM task_execution_logs WHERE task_id IN(SELECT task_id FROM task_delete)";
+
+        queryWithTransaction(
+                REMOVE_WORKFLOW_SQL,
+                q ->
+                        q.addParameter(workflow.getWorkflowId())
+                                .addParameter(workflow.getWorkflowId())
+                                .executeUpdate());
     }
 
     @Override
     public CompletableFuture<Void> asyncRemoveWorkflow(String workflowId) {
-        logger.info("asyncRemoveWorkflow is not supported for postgres indexing");
-        return CompletableFuture.completedFuture(null);
+        return CompletableFuture.runAsync(() -> removeWorkflow(workflowId), executorService);
     }
 
     @Override

@@ -403,4 +403,32 @@ public class PostgresIndexDAOTest {
         assertEquals(logs.get(1).getLog(), records.get(1).getLog());
         assertEquals(logs.get(1).getCreatedTime(), 1675845987000L);
     }
+
+    @Test
+    public void testRemoveWorkflow() throws SQLException {
+        String workflowId = UUID.randomUUID().toString();
+        WorkflowSummary wfs = getMockWorkflowSummary(workflowId);
+        indexDAO.indexWorkflow(wfs);
+
+        String taskId = UUID.randomUUID().toString();
+        TaskSummary ts = getMockTaskSummary(taskId, workflowId);
+        indexDAO.indexTask(ts);
+
+        List<TaskExecLog> logs = new ArrayList<>();
+        logs.add(getMockTaskExecutionLog(taskId, new Date(1675845986000L).getTime(), "Log 1"));
+        logs.add(getMockTaskExecutionLog(taskId, new Date(1675845987000L).getTime(), "Log 2"));
+        indexDAO.addTaskExecutionLogs(logs);
+
+        List<Map<String, Object>> records =
+                queryDb("SELECT * FROM workflow_index WHERE workflow_id = " + workflowId);
+        assertEquals("Workflow index record was not deleted", 0, records.size());
+
+        List<Map<String, Object>> records =
+                queryDb("SELECT * FROM task_index WHERE workflow_id = " + workflowId);
+        assertEquals("Task index record was not deleted", 0, records.size());
+
+        List<Map<String, Object>> records =
+                queryDb("SELECT * FROM task_execution_logs there task_id = " + taskId);
+        assertEquals("Task execution logs were not deleted", 0, records.size());
+    }
 }

@@ -27,6 +27,12 @@ public class PostgresProperties {
 
     private Integer deadlockRetryMax = 3;
 
+    @DurationUnit(ChronoUnit.MILLIS)
+    private Duration pollDataFlushInterval = Duration.ofMillis(0);
+
+    @DurationUnit(ChronoUnit.MILLIS)
+    private Duration pollDataCacheValidityPeriod = Duration.ofMillis(0);
+
     public String schema = "public";
 
     public boolean allowFullTextQueries = true;
@@ -71,5 +77,21 @@ public class PostgresProperties {
 
     public void setAllowJsonQueries(boolean allowJsonQueries) {
         this.allowJsonQueries = allowJsonQueries;
+    }
+
+    public Duration getPollDataFlushInterval() {
+        return pollDataFlushInterval;
+    }
+
+    public void setPollDataFlushInterval(Duration interval) {
+        this.pollDataFlushInterval = interval;
+    }
+
+    public Duration getPollDataCacheValidityPeriod() {
+        return pollDataCacheValidityPeriod;
+    }
+
+    public void setPollDataCacheValidityPeriod(Duration period) {
+        this.pollDataCacheValidityPeriod = period;
     }
 }

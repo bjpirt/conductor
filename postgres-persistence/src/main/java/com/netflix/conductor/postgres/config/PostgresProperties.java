@@ -27,6 +27,8 @@ public class PostgresProperties {
 
     private Integer deadlockRetryMax = 3;
 
+    private boolean onlyIndexOnStatusChange = false;
+
     public String schema = "public";
 
     public boolean allowFullTextQueries = true;
@@ -39,6 +41,14 @@ public class PostgresProperties {
 
     public void setTaskDefCacheRefreshInterval(Duration taskDefCacheRefreshInterval) {
         this.taskDefCacheRefreshInterval = taskDefCacheRefreshInterval;
+    }
+
+    public boolean getOnlyIndexOnStatusChange() {
+        return onlyIndexOnStatusChange;
+    }
+
+    public void setOnlyIndexOnStatusChange(boolean onlyIndexOnStatusChange) {
+        this.onlyIndexOnStatusChange = onlyIndexOnStatusChange;
     }
 
     public Integer getDeadlockRetryMax() {

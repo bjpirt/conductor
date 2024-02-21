@@ -39,6 +39,8 @@ public class PostgresIndexDAO extends PostgresBaseDAO implements IndexDAO {
 
     private final PostgresProperties properties;
 
+    private boolean onlyIndexOnStatusChange;
+
     public PostgresIndexDAO(
             RetryTemplate retryTemplate,
             ObjectMapper objectMapper,
@@ -46,6 +48,7 @@ public class PostgresIndexDAO extends PostgresBaseDAO implements IndexDAO {
             PostgresProperties properties) {
         super(retryTemplate, objectMapper, dataSource);
         this.properties = properties;
+        this.onlyIndexOnStatusChange = properties.getOnlyIndexOnStatusChange();
     }
 
     @Override
@@ -56,19 +59,25 @@ public class PostgresIndexDAO extends PostgresBaseDAO implements IndexDAO {
                         + "DO UPDATE SET correlation_id = EXCLUDED.correlation_id, workflow_type = EXCLUDED.workflow_type, "
                         + "start_time = EXCLUDED.start_time, status = EXCLUDED.status, json_data = EXCLUDED.json_data";
 
+        if (onlyIndexOnStatusChange) {
+            INSERT_WORKFLOW_INDEX_SQL += " WHERE workflow_index.status != EXCLUDED.status";
+        }
+
         TemporalAccessor ta = DateTimeFormatter.ISO_INSTANT.parse(workflow.getStartTime());
         Timestamp startTime = Timestamp.from(Instant.from(ta));
 
-        queryWithTransaction(
-                INSERT_WORKFLOW_INDEX_SQL,
-                q ->
-                        q.addParameter(workflow.getWorkflowId())
-                                .addParameter(workflow.getCorrelationId())
-                                .addParameter(workflow.getWorkflowType())
-                                .addParameter(startTime)
-                                .addParameter(workflow.getStatus().toString())
-                                .addJsonParameter(workflow)
-                                .executeUpdate());
+        int rowsUpdated =
+                queryWithTransaction(
+                        INSERT_WORKFLOW_INDEX_SQL,
+                        q ->
+                                q.addParameter(workflow.getWorkflowId())
+                                        .addParameter(workflow.getCorrelationId())
+                                        .addParameter(workflow.getWorkflowType())
+                                        .addParameter(startTime)
+                                        .addParameter(workflow.getStatus().toString())
+                                        .addJsonParameter(workflow)
+                                        .executeUpdate());
+        logger.debug("Postgres index workflow rows updated: {}", rowsUpdated);
     }
 
     @Override
@@ -100,24 +109,30 @@ public class PostgresIndexDAO extends PostgresBaseDAO implements IndexDAO {
                         + "DO UPDATE SET task_type = EXCLUDED.task_type, task_def_name = EXCLUDED.task_def_name, "
                         + "status = EXCLUDED.status, update_time = EXCLUDED.update_time, json_data = EXCLUDED.json_data";
 
+        if (onlyIndexOnStatusChange) {
+            INSERT_TASK_INDEX_SQL += " WHERE task_index.status != EXCLUDED.status";
+        }
+
         TemporalAccessor updateTa = DateTimeFormatter.ISO_INSTANT.parse(task.getUpdateTime());
         Timestamp updateTime = Timestamp.from(Instant.from(updateTa));
 
         TemporalAccessor startTa = DateTimeFormatter.ISO_INSTANT.parse(task.getStartTime());
         Timestamp startTime = Timestamp.from(Instant.from(startTa));
 
-        queryWithTransaction(
-                INSERT_TASK_INDEX_SQL,
-                q ->
-                        q.addParameter(task.getTaskId())
-                                .addParameter(task.getTaskType())
-                                .addParameter(task.getTaskDefName())
-                                .addParameter(task.getStatus().toString())
-                                .addParameter(startTime)
-                                .addParameter(updateTime)
-                                .addParameter(task.getWorkflowType())
-                                .addJsonParameter(task)
-                                .executeUpdate());
+        int rowsUpdated =
+                queryWithTransaction(
+                        INSERT_TASK_INDEX_SQL,
+                        q ->
+                                q.addParameter(task.getTaskId())
+                                        .addParameter(task.getTaskType())
+                                        .addParameter(task.getTaskDefName())
+                                        .addParameter(task.getStatus().toString())
+                                        .addParameter(startTime)
+                                        .addParameter(updateTime)
+                                        .addParameter(task.getWorkflowType())
+                                        .addJsonParameter(task)
+                                        .executeUpdate());
+        logger.debug("Postgres index task rows updated: {}", rowsUpdated);
     }
 
     @Override

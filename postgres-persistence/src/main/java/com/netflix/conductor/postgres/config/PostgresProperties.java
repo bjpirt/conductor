@@ -27,6 +27,10 @@ public class PostgresProperties {
 
     private Integer deadlockRetryMax = 3;
 
+    private boolean experimentalQueueNotify = false;
+
+    private Integer experimentalQueueNotifyStalePeriod = 5000;
+
     public String schema = "public";
 
     public boolean allowFullTextQueries = true;
@@ -71,5 +75,21 @@ public class PostgresProperties {
 
     public void setAllowJsonQueries(boolean allowJsonQueries) {
         this.allowJsonQueries = allowJsonQueries;
+    }
+
+    public boolean getExperimentalQueueNotify() {
+        return experimentalQueueNotify;
+    }
+
+    public void setExperimentalQueueNotify(boolean experimentalQueueNotify) {
+        this.experimentalQueueNotify = experimentalQueueNotify;
+    }
+
+    public Integer getExperimentalQueueNotifyStalePeriod() {
+        return experimentalQueueNotifyStalePeriod;
+    }
+
+    public void setExperimentalQueueNotifyStalePeriod(Integer experimentalQueueNotifyStalePeriod) {
+        this.experimentalQueueNotifyStalePeriod = experimentalQueueNotifyStalePeriod;
     }
 }
